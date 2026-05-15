@@ -1,19 +1,19 @@
-# Makefile for Ferry Transport Simulation (Java)
+# Makefile for Java Ferry Transport Simulation
 
 JAVAC   = javac
 JAVA    = java
 SRC     = FerrySim.java
-MAIN    = FerrySim
+CLASS   = FerrySim.class
 
 .PHONY: all clean run
 
-all: compile
+all: $(CLASS)
 
-compile:
+$(CLASS): $(SRC)
 	$(JAVAC) $(SRC)
 
-run: compile
-	$(JAVA) $(MAIN)
+run: $(CLASS)
+	$(JAVA) FerrySim
 
 clean:
 	rm -f *.class

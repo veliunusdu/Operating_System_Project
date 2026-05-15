@@ -18,12 +18,12 @@ The system simulates a ferry operating between two sides (Side A and Side B). It
     4. **Unloading**: Updates its state and waits for a random delay before starting the return trip.
 
 ## 3. Synchronization Strategy
-The simulation uses several high-level synchronization primitives to ensure safety and order:
-- **Semaphores (`tollBooths`)**: Used to limit access to the 2 toll booths per side. Only 2 vehicles can be "at the toll" simultaneously per side.
-- **Locks & Conditions (`queueLock`, `vehicleReady`)**: Used in the waiting area. When a vehicle joins the queue, it signals the Ferry (which might be waiting for a vehicle to arrive).
-- **Monitor Locks (`synchronized(v)`)**: Used for the boarding/unloading handshake between the Ferry and specific Vehicles. This ensures that a vehicle only proceeds when the ferry has explicitly picked it or allowed it to unload.
-- **Atomic Variables (`completedCount`)**: Tracks the total number of finished round trips to determine when the simulation ends.
-- **Thread Safety**: All shared data (queues, statistics, ferry state) are protected by either thread-safe collections (`ArrayBlockingQueue`) or explicit synchronization.
+The simulation leverages Java's native concurrency features to ensure a robust, race-free environment:
+- **Semaphores (`tollBooths`)**: A counting semaphore manages access to the 4 toll booths (2 per side), ensuring that no more than 2 vehicles per side occupy the booths simultaneously.
+- **ReentrantLocks & Conditions (`queueLock`, `vehicleReady`)**: Used for the waiting area. The `ReentrantLock` provides mutual exclusion for the queue, while the `Condition` object allows the Ferry thread to `await()` for vehicles to join the queue without consuming CPU cycles (no busy-waiting).
+- **Native Monitor Locks (`synchronized`)**: Used for the boarding/unloading handshake between the Ferry and individual `Vehicle` objects. Using `wait()` and `notify()` on the vehicle object allows for a lightweight, precise signaling mechanism.
+- **AtomicInteger (`completedCount`)**: Provides lock-free updates to the total count of completed round trips, which is used to determine when the simulation ends.
+- **FIFO Discipline**: Guaranteed by the `ArrayBlockingQueue`, ensuring vehicles are served in the exact order they entered the waiting area.
 
 ## 4. Fairness and Deadlock Discussion
 ### 4.1 Fairness
@@ -34,12 +34,12 @@ The simulation uses several high-level synchronization primitives to ensure safe
 
 ### 4.2 Deadlock Avoidance
 Deadlock is avoided through a clear hierarchy of locks and state transitions:
-- The Ferry thread never holds a lock while waiting for a "slow" event (it uses `await` or `notify` on specific vehicles).
+- The Ferry thread never holds a lock while waiting for a "slow" event; it uses `await()` or `wait()` which atomically releases the lock.
 - Locks are always acquired in a consistent order: first the Side-specific locks, then the Vehicle-specific monitor locks.
-- No "busy waiting" is used; all threads use condition-based waiting (`wait()`/`notify()`, `await()`/`signal()`), which releases the associated lock while waiting.
+- The use of high-level Java primitives reduces the risk of manual locking errors that typically lead to inconsistent states.
 
 ## 5. Assumptions
-- **Instant Boarding/Unloading**: While there is a small delay for realism, the boarding/unloading process is treated as a critical section where only one vehicle moves at a time.
+- **Instant Boarding/Unloading**: While there is a small delay for realism, the boarding/unloading process is treated as a critical section.
 - **No Mechanical Failure**: The ferry and toll booths are assumed to be 100% reliable.
 - **Uniform Travel Time**: The travel time range is the same for both directions.
 

@@ -1,6 +1,6 @@
 # Ferry Transport Simulation
 
-This project is a multithreaded simulation of a ferry transport system, implemented in **Java**. It models vehicles (cars, minibuses, and trucks) traveling between two sides (Side A and Side B) using a single ferry. 
+This project is a multithreaded simulation of a ferry transport system implemented in **Java**. It models vehicles (cars, minibuses, and trucks) traveling between two sides (Side A and Side B) using a single ferry.
 
 The simulation utilizes threads, locks, condition variables, and semaphores to coordinate the loading, unloading, and travel of vehicles.
 
@@ -26,8 +26,8 @@ Alternatively, you can compile and run manually:
    Example: `java FerrySim 12 10 8 20 4000`
 
 ## Project Files
-- `FerrySim.java`: Main Java implementation.
+- `FerrySim.java`: Main Java implementation with command-line parameter support.
 - `Makefile`: Build automation file.
 - `REPORT.md`: Detailed system design and synchronization strategy.
 - `SAMPLE_OUTPUT.txt`: Example run output.
-- `README.md`: This project documentation.# Operating_System_Project
+- `README.md`: This project documentation.
