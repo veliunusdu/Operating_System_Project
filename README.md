@@ -19,10 +19,11 @@ Alternatively, you can compile and run manually:
    ```bash
    javac FerrySim.java
    ```
-2. Run the compiled class:
+2. Run the compiled class (with optional parameters):
    ```bash
-   java FerrySim
+   java FerrySim [cars] [minibuses] [trucks] [max_load] [timeout_ms]
    ```
+   Example: `java FerrySim 12 10 8 20 4000`
 
 ## Project Files
 - `FerrySim.java`: Main Java implementation.

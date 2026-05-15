@@ -1,20 +1,19 @@
-CC      = gcc
-CFLAGS  = -Wall -Wextra -O2 -std=c11 -D_POSIX_C_SOURCE=200809L
-LIBS    = -lpthread -lrt
+# Makefile for Ferry Transport Simulation (Java)
 
-TARGET  = ferry_sim
-SRCS    = ferry_sim.c
-HDRS    = ferry_sim.h
+JAVAC   = javac
+JAVA    = java
+SRC     = FerrySim.java
+MAIN    = FerrySim
 
 .PHONY: all clean run
 
-all: $(TARGET)
+all: compile
 
-$(TARGET): $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRCS) $(LIBS)
+compile:
+	$(JAVAC) $(SRC)
 
-run: $(TARGET)
-	./$(TARGET)
+run: compile
+	$(JAVA) $(MAIN)
 
 clean:
-	rm -f $(TARGET)
+	rm -f *.class

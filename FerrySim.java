@@ -9,14 +9,16 @@ import java.util.concurrent.locks.*;
  */
 public class FerrySim {
 
-    // --- Configuration ---
-    private static final int NUM_CARS = 12;
-    private static final int NUM_MINIBUSES = 10;
-    private static final int NUM_TRUCKS = 8;
-    private static final int TOTAL_VEHICLES = NUM_CARS + NUM_MINIBUSES + NUM_TRUCKS;
-    private static final int FERRY_MAX_LOAD = 20;
-    private static final int TOLL_PER_SIDE = 2;
-    private static final int DEPARTURE_TIMEOUT_MS = 4000;
+    // --- Configuration (Defaults) ---
+    private static int NUM_CARS = 12;
+    private static int NUM_MINIBUSES = 10;
+    private static int NUM_TRUCKS = 8;
+    private static int TOTAL_VEHICLES = NUM_CARS + NUM_MINIBUSES + NUM_TRUCKS;
+    private static int FERRY_MAX_LOAD = 20;
+    private static int TOLL_PER_SIDE = 2;
+    private static int DEPARTURE_TIMEOUT_MS = 4000;
+
+    private static final Random random = new Random();
 
     // --- Shared State ---
     private static final long simStartMs = System.currentTimeMillis();
@@ -64,14 +66,14 @@ public class FerrySim {
     }
 
     private static int randRange(int lo, int hi) {
-        return lo + new Random().nextInt(hi - lo + 1);
+        return lo + random.nextInt(hi - lo + 1);
     }
 
     // --- Side Class ---
     static class Side {
         final SideID id;
         final Semaphore tollBooths = new Semaphore(TOLL_PER_SIDE, true);
-        final ArrayBlockingQueue<Vehicle> queue = new ArrayBlockingQueue<>(TOTAL_VEHICLES);
+        final ArrayBlockingQueue<Vehicle> queue = new ArrayBlockingQueue<>(100); 
         final ReentrantLock queueLock = new ReentrantLock(true);
         final Condition vehicleReady = queueLock.newCondition();
 
@@ -188,6 +190,7 @@ public class FerrySim {
 
                 // 2. Load
                 Side s = sides[currentSide.id];
+                Side oppositeSide = sides[currentSide.opposite().id];
                 long deadline = System.currentTimeMillis() + DEPARTURE_TIMEOUT_MS;
 
                 while (true) {
@@ -204,6 +207,13 @@ public class FerrySim {
                         break;
                     }
                     if (next == null) {
+                        // ADVANCED REQUIREMENT 7.2: Two-Side Coordination
+                        if (currentLoad == 0 && !oppositeSide.queue.isEmpty()) {
+                            log("Ferry Coordination — Current side %s is empty, but %s has %d vehicles waiting. Departing early.", 
+                                currentSide.name, oppositeSide.id.name, oppositeSide.queue.size());
+                            break;
+                        }
+
                         long waitTime = deadline - System.currentTimeMillis();
                         if (waitTime <= 0) {
                             log("Ferry timeout — departing %s with load=%d units", currentSide.name, currentLoad);
@@ -248,8 +258,24 @@ public class FerrySim {
 
     // --- Main ---
     public static void main(String[] args) {
+        if (args.length >= 4) {
+            try {
+                NUM_CARS = Integer.parseInt(args[0]);
+                NUM_MINIBUSES = Integer.parseInt(args[1]);
+                NUM_TRUCKS = Integer.parseInt(args[2]);
+                FERRY_MAX_LOAD = Integer.parseInt(args[3]);
+                TOTAL_VEHICLES = NUM_CARS + NUM_MINIBUSES + NUM_TRUCKS;
+                if (args.length >= 5) DEPARTURE_TIMEOUT_MS = Integer.parseInt(args[4]);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid arguments. Usage: java FerrySim [cars] [minibuses] [trucks] [max_load] [timeout_ms]");
+                System.exit(1);
+            }
+        }
+
         System.out.println("╔══════════════════════════════════════════════════╗");
         System.out.println("║       FERRY TRANSPORT SIMULATION — START         ║");
+        System.out.printf("║  Config: %d Cars, %d Minibuses, %d Trucks       ║%n", NUM_CARS, NUM_MINIBUSES, NUM_TRUCKS);
+        System.out.printf("║  Ferry Max Load: %d | Timeout: %d ms            ║%n", FERRY_MAX_LOAD, DEPARTURE_TIMEOUT_MS);
         System.out.println("╚══════════════════════════════════════════════════╝\n");
 
         sides[0] = new Side(SideID.SIDE_A);
@@ -281,7 +307,7 @@ public class FerrySim {
     }
 
     private static SideID randomSide() {
-        return SideID.values()[new Random().nextInt(2)];
+        return SideID.values()[random.nextInt(2)];
     }
 
     private static void printStats(List<Vehicle> allVehicles) {

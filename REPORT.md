@@ -1,7 +1,7 @@
-# Ferry Transport Simulation - Project Report
-
+Project Title: Ferry Transport Simulation (Multithreaded System)
+________________________________________
 ## 1. System Design
-The system simulates a ferry operating between two sides (Side A and Side B). It consists of three main components:
+The system simulates a ferry operating between two sides (Side A and Side B). It is implemented in **Java** and consists of three main components:
 - **Vehicle Threads**: Each vehicle (Car, Minibus, Truck) is an independent thread that performs a round trip.
 - **Ferry Thread**: A central controller that handles loading, traveling, and unloading.
 - **Side Management**: Handles toll booths and waiting areas (FIFO queues).
@@ -28,6 +28,7 @@ The simulation uses several high-level synchronization primitives to ensure safe
 ## 4. Fairness and Deadlock Discussion
 ### 4.1 Fairness
 - **Side Fairness**: The ferry alternates between Side A and Side B after every departure. This ensures that neither side is ignored indefinitely.
+- **Two-Side Coordination (7.2)**: To minimize global waiting times, the ferry dynamically checks the opposite side. If the current side is empty but the opposite side has vehicles waiting, the ferry skips the departure timeout and crosses immediately.
 - **Vehicle Fairness**: Within each side, vehicles are handled using a **FIFO queue**. The ferry always checks the head of the queue, ensuring that vehicles are served in their arrival order.
 - **Starvation Prevention**: A **departure timeout** (4000ms) ensures that the ferry departs even if it's not full, preventing vehicles from waiting forever on a low-traffic side.
 
@@ -41,3 +42,10 @@ Deadlock is avoided through a clear hierarchy of locks and state transitions:
 - **Instant Boarding/Unloading**: While there is a small delay for realism, the boarding/unloading process is treated as a critical section where only one vehicle moves at a time.
 - **No Mechanical Failure**: The ferry and toll booths are assumed to be 100% reliable.
 - **Uniform Travel Time**: The travel time range is the same for both directions.
+
+## 6. Advanced Features (Bonus)
+- **Configurable Parameters**: The simulation parameters are no longer hardcoded. The system accepts command-line arguments to customize:
+    - Number of Cars, Minibuses, and Trucks.
+    - Maximum Ferry Capacity.
+    - Departure Timeout (ms).
+  Usage: `java FerrySim [cars] [minibuses] [trucks] [max_load] [timeout_ms]`
